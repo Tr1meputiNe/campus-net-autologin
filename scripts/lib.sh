@@ -95,3 +95,28 @@ cn_load_config() {
         . "$CONFIG_FILE"
     fi
 }
+
+# 日志轮转：只保留最近 RETAIN_DAYS 天（默认 90），按天最多执行一次。
+#   cn_rotate_log          # 受"每天一次"节流
+#   cn_rotate_log force    # 强制执行（手动调用）
+cn_rotate_log() {
+    local force="${1:-}" days="${RETAIN_DAYS:-90}" log="$LOG_DIR/monitor.log"
+    local stamp="$STATE_DIR/.last-rotate" now last cutoff tmp
+
+    [ -f "$log" ] || return 0
+    case "$days" in (''|*[!0-9]*) return 0 ;; esac
+    [ "$days" -ge 1 ] || return 0
+
+    now=$(date +%s)
+    if [ "$force" != "force" ] && [ -f "$stamp" ]; then
+        last=$(cat "$stamp" 2>/dev/null || echo 0)
+        [ $((now - last)) -lt 86400 ] && return 0     # 一天最多转一次
+    fi
+
+    cutoff=$(date -v-"${days}"d '+%Y-%m-%d %H:%M:%S')
+    tmp="$log.tmp.$$"
+    awk -v c="$cutoff" '$1" "$2 >= c' "$log" >"$tmp" 2>/dev/null && mv "$tmp" "$log"
+    mkdir -p "$STATE_DIR" 2>/dev/null
+    printf '%s' "$now" >"$stamp"
+    return 0
+}

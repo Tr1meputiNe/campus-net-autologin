@@ -15,7 +15,11 @@ cn_load_config
 HEARTBEAT_SEC="${HEARTBEAT_SEC:-1800}"
 STATE_F="$(cn_state_file "$IFACE")"
 FORCE=0
-[ "${1:-}" = "--force" ] && FORCE=1
+ROTATE_ONLY=0
+case "${1:-}" in
+    --force)  FORCE=1 ;;
+    --rotate) ROTATE_ONLY=1 ;;
+esac
 
 verify_online() { cn_online >/dev/null 2>&1; }
 
@@ -104,6 +108,16 @@ do_login() {
 
 main() {
     local cur key prev last now rc ip_now LINK_DOWN
+
+    # --rotate：手动立即轮转日志
+    if [ "$ROTATE_ONLY" = "1" ]; then
+        cn_rotate_log force
+        echo "已按保留 ${RETAIN_DAYS:-90} 天轮转：$LOG_DIR/monitor.log（现 $(wc -l <"$LOG_DIR/monitor.log" 2>/dev/null | tr -d ' ') 行）"
+        return 0
+    fi
+
+    # 日志轮转（每天最多一次，开销可忽略）
+    cn_rotate_log
 
     # --force：即使当前在线也发一次认证请求，用来验证参数是否被服务端接受
     if [ "$FORCE" = "1" ]; then

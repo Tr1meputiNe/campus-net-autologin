@@ -16,13 +16,25 @@ REM      install.cmd -Uninstall     uninstall
 REM      install.cmd -IntervalSeconds 60
 REM ================================================================
 
+REM Double-clicked? Then keep the window open at the end.
+set "PAUSE_AT_END="
+echo %cmdcmdline% | find /i "%~nx0" >nul 2>&1
+if not errorlevel 1 set "PAUSE_AT_END=1"
+
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0install.ps1" %*
 set "RC=%ERRORLEVEL%"
 
-if not "%RC%"=="0" (
-    echo.
+echo.
+if "%RC%"=="0" (
+    echo [OK] install.ps1 finished.
+) else (
     echo [!] install.ps1 exited with code %RC%
+    set "PAUSE_AT_END=1"
+)
+
+if defined PAUSE_AT_END (
     echo.
-    pause
+    echo Press any key to close this window . . .
+    pause >nul
 )
 exit /b %RC%

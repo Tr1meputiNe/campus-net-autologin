@@ -413,7 +413,20 @@ function Show-Diagnose {
 #  主流程
 # ────────────────────────────────────────────────────────────────
 function Invoke-Main {
-    if ($Diagnose) { Show-Diagnose; return 0 }
+    if ($Diagnose) {
+        # 同时落盘一份，万一窗口关了也能打开文件看
+        $report = (Show-Diagnose | Out-String)
+        Write-Output $report
+        $diagFile = Join-Path $AppDir 'diagnose.txt'
+        try {
+            if (-not (Test-Path $AppDir)) { New-Item -ItemType Directory -Force -Path $AppDir | Out-Null }
+            $report | Out-File -LiteralPath $diagFile -Encoding UTF8
+            Write-Output "诊断结果已保存到: $diagFile"
+        } catch {
+            Write-Output "（诊断结果写入文件失败：$($_.Exception.Message)）"
+        }
+        return 0
+    }
 
     if (-not (Test-Path $LogDir)) { New-Item -ItemType Directory -Force -Path $LogDir | Out-Null }
 

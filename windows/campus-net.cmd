@@ -2,9 +2,8 @@
 REM ================================================================
 REM  campus-net-autologin (Windows) - helper launcher
 REM
-REM  Same reason as install.cmd: Windows blocks .ps1 by default,
-REM  so every entry point goes through -ExecutionPolicy Bypass.
-REM  Nothing is changed on your system.
+REM  Windows blocks .ps1 by default, so every entry point goes
+REM  through -ExecutionPolicy Bypass. Nothing is changed on your system.
 REM
 REM  Usage:
 REM      campus-net.cmd diagnose   environment diagnosis (run this first)
@@ -16,10 +15,18 @@ REM      campus-net.cmd status     scheduled task status
 REM ================================================================
 
 setlocal
+
 set "APPDIR=%LOCALAPPDATA%\campus-net"
 set "PS1=%APPDIR%\campus-net-autologin.ps1"
 set "LOG=%APPDIR%\logs\monitor.log"
 set "CFG=%APPDIR%\config.ps1"
+set "DIAG=%APPDIR%\diagnose.txt"
+
+REM Double-clicked? (cmd /c ""...campus-net.cmd"") - keep the window open at the
+REM end, otherwise all output is gone before you can read it.
+set "PAUSE_AT_END="
+echo %cmdcmdline% | find /i "%~nx0" >nul 2>&1
+if not errorlevel 1 set "PAUSE_AT_END=1"
 
 if /i "%~1"=="diagnose" goto diagnose
 if /i "%~1"=="force"    goto force
@@ -32,6 +39,8 @@ goto usage
 :diagnose
 if not exist "%PS1%" goto notinstalled
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%PS1%" -Diagnose
+echo.
+echo [i] Diagnosis also saved to: %DIAG%
 goto end
 
 :force
@@ -49,7 +58,7 @@ if not exist "%LOG%" (
     echo [!] No log yet: %LOG%
     goto end
 )
-powershell.exe -NoProfile -Command "Get-Content -LiteralPath '%LOG%' -Tail 20 -Encoding UTF8"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Get-Content -LiteralPath '%LOG%' -Tail 20 -Encoding UTF8"
 goto end
 
 :editconfig
@@ -58,18 +67,19 @@ notepad "%CFG%"
 goto end
 
 :status
-if not exist "%~dp0install.ps1" goto statusappdir
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0install.ps1" -Status
-goto end
-
-:statusappdir
-if not exist "%APPDIR%\install.ps1" goto notinstalled
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%APPDIR%\install.ps1" -Status
-goto end
+if exist "%~dp0install.ps1" (
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0install.ps1" -Status
+    goto end
+)
+if exist "%APPDIR%\install.ps1" (
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%APPDIR%\install.ps1" -Status
+    goto end
+)
+goto notinstalled
 
 :notinstalled
 echo [!] Not installed yet: %PS1%
-echo     Run install.cmd first.
+echo     Run install.cmd first (from an open CMD window, or double-click it).
 goto end
 
 :usage
@@ -85,4 +95,9 @@ echo.
 echo   To install:  install.cmd
 
 :end
+if defined PAUSE_AT_END (
+    echo.
+    echo Press any key to close this window . . .
+    pause >nul
+)
 endlocal

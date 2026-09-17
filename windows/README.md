@@ -45,10 +45,35 @@ notepad "$env:LOCALAPPDATA\campus-net\config.ps1"
 | `campus-net-autologin.ps1 -Force` | 立即发一次认证请求 |
 | `campus-net-autologin.ps1 -Rotate` | 立即轮转日志 |
 
+## 开机自启动
+
+`install.ps1` 注册的计划任务带**两个触发器**：
+
+| 触发器 | 作用 |
+|---|---|
+| **登录时**（AtLogOn） | 你登录 Windows 后**立刻跑一次** —— 这就是"开机自启动" |
+| **每分钟**（重复） | 之后持续轮询，每 60 秒探活一次 |
+
+用 `-Status` 可以确认两个触发器都在：
+
+```powershell
+.\install.ps1 -Status
+#   触发器    Logon
+#   触发器    Time
+```
+
+任务以**当前用户身份、仅在用户登录时运行**注册，所以重启后你一登录就自动起来，
+**不需要存储密码**，也不会引入常驻的高权限任务。
+
+> 想在**登录界面之前**就完成认证（例如机器常年锁屏、只用远程桌面连）？
+> 那需要把任务改成 SYSTEM 身份运行，配置也得从 `%LOCALAPPDATA%` 挪到 `%ProgramData%`。
+> 默认不做，因为那会引入一个以最高权限常驻的任务。有需要可以提 issue。
+
 ## 和 macOS 版的差异
 
 | 项 | macOS | Windows |
 |---|---|---|
+| 开机自启 | LaunchAgent `RunAtLoad`，登录即跑 | 计划任务登录触发器 + 每分钟重复 |
 | 定时 | LaunchAgent，30 秒 | 计划任务，**最小 1 分钟** |
 | 网络变化触发 | WatchPaths | 无（靠 1 分钟轮询，够用） |
 | 绑网卡发请求 | `curl --interface en1` | `curl --interface <本机IP>` |

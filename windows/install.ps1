@@ -55,6 +55,9 @@ if ($Status) {
         Write-Host "任务名    $TaskName" -ForegroundColor Green
         Write-Host "状态      $($t.State)"
         Write-Host "重复间隔  $rep"
+        foreach ($tr in $t.Triggers) {
+            Write-Host "触发器    $($tr.CimClass.CimClassName -replace 'MSFT_Task','' -replace 'Trigger','')"
+        }
         Write-Host "上次运行  $($i.LastRunTime)"
         Write-Host "上次结果  0x$('{0:X}' -f $i.LastTaskResult)"
         Write-Host "下次运行  $($i.NextRunTime)"
@@ -109,7 +112,13 @@ if (-not (Test-Path $script)) { throw "找不到主脚本 $script" }
 $action = New-ScheduledTaskAction -Execute 'powershell.exe' `
     -Argument "-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$script`""
 
-$trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) `
+# 触发器 1：登录时立刻跑一次 —— 这就是"开机自启动"
+#   （任务以"仅在用户登录时运行"的方式注册，所以登录触发是正确粒度；
+#    真正想在登录界面之前就认证，需要用 SYSTEM 身份 + ProgramData 配置，见 README）
+$triggerLogon = New-ScheduledTaskTrigger -AtLogOn -User "$env:USERDOMAIN\$env:USERNAME"
+
+# 触发器 2：之后每 N 秒轮询（不写 RepetitionDuration 即为无限期重复）
+$triggerRepeat = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) `
     -RepetitionInterval (New-TimeSpan -Seconds $IntervalSeconds)
 
 $settings = New-ScheduledTaskSettingsSet `
@@ -123,7 +132,7 @@ $principal = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" 
 if (Get-Task) { Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false | Out-Null }
 
 Register-ScheduledTask -TaskName $TaskName `
-    -Action $action -Trigger $trigger -Settings $settings -Principal $principal `
+    -Action $action -Trigger @($triggerLogon, $triggerRepeat) -Settings $settings -Principal $principal `
     -Description '校园网掉线自动重连（Dr.COM / 锐捷 eportal）' | Out-Null
 
 Write-Host ''

@@ -96,35 +96,43 @@ cn_load_config() {
     fi
 }
 
-# 日志轮转：只保留最近 RETAIN_DAYS 天（默认 90），按天最多执行一次。
-#   cn_rotate_log          # 受"每天一次"节流
-#   cn_rotate_log force    # 强制执行（手动调用）
+# 日志轮转：跨天把 monitor.log 改名归档，并删除超过 RETAIN_DAYS 天的归档文件。
+# 全程只做 rename 和 unlink —— 都是元数据操作，从不重写文件内容。
+#   cn_rotate_log          正常调用（每个自然日最多执行一次）
+#   cn_rotate_log force    立即执行（手动）
 cn_rotate_log() {
-    local force="${1:-}" days="${RETAIN_DAYS:-90}" log="$LOG_DIR/monitor.log"
-    local stamp="$STATE_DIR/.last-rotate" now last cutoff tmp
+    local force="${1:-}" days="${RETAIN_DAYS:-90}" live="$LOG_DIR/monitor.log"
+    local today lastday mday archive cutoff f d
 
-    [ -f "$log" ] || return 0
-    case "$days" in (''|*[!0-9]*) return 0 ;; esac
-    [ "$days" -ge 1 ] || return 0
+    case "$days" in (''|*[!0-9]*) days=90 ;; esac
+    [ "$days" -ge 1 ] 2>/dev/null || days=90
+    today="$(date '+%Y-%m-%d')"
 
-    now=$(date +%s)
-    if [ "$force" != "force" ] && [ -f "$stamp" ]; then
-        last=$(cat "$stamp" 2>/dev/null || echo 0)
-        [ $((now - last)) -lt 86400 ] && return 0     # 一天最多转一次
+    # 每个自然日只做一次（rename/unlink 很便宜，但没必要每 30 秒扫一遍目录）
+    if [ "$force" != "force" ]; then
+        lastday="$(cat "$STATE_DIR/.last-rotate" 2>/dev/null || true)"
+        [ "$lastday" = "$today" ] && return 0
     fi
 
-    cutoff=$(date -v-"${days}"d '+%Y-%m-%d %H:%M:%S')
-
-    # 日志只追加，首行即最老的一行。首行都还没过期就无事可做，别白重写一遍文件
-    if awk -v c="$cutoff" 'NR==1 { exit ($1" "$2 >= c) ? 0 : 1 }' "$log" 2>/dev/null; then
-        mkdir -p "$STATE_DIR" 2>/dev/null
-        printf '%s' "$now" >"$stamp"
-        return 0
+    # 1) 跨天归档：monitor.log -> monitor-<日期>.log（纯 rename，内容一个字节都不动）
+    if [ -f "$live" ]; then
+        mday="$(date -r "$live" '+%Y-%m-%d' 2>/dev/null || printf '%s' "$today")"
+        if [ "$mday" != "$today" ]; then
+            archive="$LOG_DIR/monitor-$mday.log"
+            [ -e "$archive" ] && archive="$LOG_DIR/monitor-$mday.$$.log"
+            mv "$live" "$archive" 2>/dev/null || true
+        fi
     fi
 
-    tmp="$log.tmp.$$"
-    awk -v c="$cutoff" '$1" "$2 >= c' "$log" >"$tmp" 2>/dev/null && mv "$tmp" "$log"
+    # 2) 删除过期归档：纯 unlink，零数据写入
+    cutoff="$(date -v-"${days}"d '+%Y-%m-%d')"
+    for f in "$LOG_DIR"/monitor-[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*.log; do
+        [ -e "$f" ] || continue
+        d="$(basename "$f" | cut -c9-18)"
+        [[ "$d" < "$cutoff" ]] && rm -f "$f"
+    done
+
     mkdir -p "$STATE_DIR" 2>/dev/null
-    printf '%s' "$now" >"$stamp"
+    printf '%s' "$today" >"$STATE_DIR/.last-rotate"
     return 0
 }

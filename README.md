@@ -174,12 +174,23 @@ START_INTERVAL=30 ./install.sh     # 改回 30 秒（默认）
 **关键：认证请求只在探活判定「被踢」时才发，正常在线时对学校的认证服务器 0 请求。**
 
 日志心跳默认 30 分钟（`HEARTBEAT_SEC`，可在 `config.env` 里调大）。
-日志**默认只保留最近 90 天**（`RETAIN_DAYS`），由 `portal-login.sh` 每天最多自动
-轮转一次，不需要额外的定时任务。想立刻清理可以手动执行：
+
+日志**默认只保留最近 90 天**（`RETAIN_DAYS`）。轮转由 `portal-login.sh` 每天自动
+触发一次，不需要额外定时任务，可以手动立即执行：
 
 ```bash
-./scripts/portal-login.sh --rotate      # 立即按 RETAIN_DAYS 清理
+./scripts/portal-login.sh --rotate
 ```
+
+轮转方式对 SSD 友好：**只做 rename 和 unlink，从不重写文件内容**。
+
+- 跨天时把 `monitor.log` 改名为 `monitor-YYYY-MM-DD.log`（rename 是元数据操作）
+- 删掉超过 `RETAIN_DAYS` 天的归档文件（unlink 是元数据操作）
+- 全天只有一次 rename、若干次 unlink，**零数据重写**
+
+> 为什么不是"删掉旧行"？因为 POSIX 只有 `ftruncate`（从**尾部**截断），
+> macOS/APFS 也不支持收缩文件头部区间。要从头部删就必须把剩余数据前移，
+> 那本身就是重写。改成按天分文件后，删除就变成了纯 unlink。
 
 > 日志量说明：早期版本因为状态串里含 `ping=` 这种每次都变的字段，导致每次都判定
 > 「状态变了」，每 30 秒刷一行（2447 行/天）。现已改为按**状态指纹**
@@ -189,7 +200,8 @@ START_INTERVAL=30 ./install.sh     # 改回 30 秒（默认）
 ## 日志与统计
 
 ```bash
-tail -f ~/Library/Logs/campus-net/monitor.log     # 实时看
+tail -f ~/Library/Logs/campus-net/monitor.log     # 实时看（当前日志）
+ls -1 ~/Library/Logs/campus-net/                  # 归档：monitor-YYYY-MM-DD.log
 ./scripts/log-summary.sh                          # 统计全部
 ./scripts/log-summary.sh 24                       # 只看最近 24 小时
 ./scripts/net-monitor.sh                          # 看一次当前状态

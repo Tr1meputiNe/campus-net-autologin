@@ -112,7 +112,10 @@ main() {
     # --rotate：手动立即轮转日志
     if [ "$ROTATE_ONLY" = "1" ]; then
         cn_rotate_log force
-        echo "已按保留 ${RETAIN_DAYS:-90} 天轮转：$LOG_DIR/monitor.log（现 $(wc -l <"$LOG_DIR/monitor.log" 2>/dev/null | tr -d ' ') 行）"
+        echo "日志轮转完成（保留 ${RETAIN_DAYS:-90} 天）"
+        ls -1 "$LOG_DIR"/monitor*.log 2>/dev/null | while read -r f; do
+            printf '  %6s 行  %s\n' "$(wc -l <"$f" | tr -d ' ')" "$f"
+        done
         return 0
     fi
 

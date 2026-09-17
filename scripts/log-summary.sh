@@ -4,18 +4,20 @@
 #   ./log-summary.sh 24                   # 只看最近 24 小时
 set -uo pipefail
 
-LOG="${LOG:-$HOME/Library/Logs/campus-net/monitor.log}"
+LOG_DIR="${LOG_DIR:-$HOME/Library/Logs/campus-net}"
 HOURS="${1:-0}"
 
-[ -f "$LOG" ] || { echo "找不到日志：$LOG"; exit 1; }
+# 归档文件名是 monitor-YYYY-MM-DD.log，字母序即时间序，且都排在 monitor.log 之前
+FILES="$(ls -1 "$LOG_DIR"/monitor*.log 2>/dev/null | sort)"
+[ -n "$FILES" ] || { echo "找不到日志：$LOG_DIR/monitor*.log"; exit 1; }
 
+DATA="$(cat $FILES)"
 if [ "$HOURS" -gt 0 ] 2>/dev/null; then
     SINCE=$(date -v-"${HOURS}"H '+%Y-%m-%d %H:%M:%S')
-    DATA=$(awk -v s="$SINCE" '$1" "$2 >= s' "$LOG")
+    DATA="$(printf '%s\n' "$DATA" | awk -v s="$SINCE" '$1" "$2 >= s')"
     echo "=== 最近 ${HOURS} 小时（自 ${SINCE}） ==="
 else
-    DATA=$(cat "$LOG")
-    echo "=== 全部记录 ==="
+    echo "=== 全部记录（$(printf '%s\n' "$FILES" | wc -l | tr -d ' ') 个日志文件） ==="
 fi
 
 printf '%s\n' "$DATA" | awk '

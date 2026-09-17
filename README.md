@@ -38,7 +38,7 @@ campus-net.cmd diagnose  确认网卡和 portal 都对
 
 三个值：
 
-- `CAMPUS_USER` 学号，有的学校要带 `@cmcc`、`@dx` 之类后缀
+- `CAMPUS_USER` 学号。有些学校要带运营商后缀 —— 移动是 `@cmcc`、电信是 `@dx`、联通是 `@lt`
 - `CAMPUS_PASS` 密码
 - `PORTAL_HOST` 登录页那个 IP —— 掉线时浏览器会自动跳过去，看地址栏就知道
 

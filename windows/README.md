@@ -23,7 +23,7 @@ campus-net.cmd config
 记事本会打开配置，填三行：
 
 ```powershell
-$CampusUser  = "你的学号"      # 有的学校要带 @cmcc / @dx 后缀
+$CampusUser  = "你的学号"      # 有些学校要带运营商后缀：移动 @cmcc、电信 @dx、联通 @lt
 $CampusPass  = "你的密码"
 $PortalHost  = "10.x.x.x"     # 掉线时浏览器跳到的登录页 IP
 ```

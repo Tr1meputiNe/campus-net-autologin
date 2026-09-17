@@ -1,0 +1,14 @@
+# 统一换行符，避免 Windows 上 clone 后脚本被改坏
+#
+# 背景：Git for Windows 默认 core.autocrlf=true，会把检出内容转成 CRLF。
+#   - .sh 变成 CRLF 会 "bad interpreter"，直接跑不起来
+#   - .ps1 必须是 CRLF 才符合 Windows 习惯
+# 这里显式写死，不依赖每个人本地的 autocrlf 设置。
+* text=auto eol=lf
+
+*.ps1          text eol=crlf
+*.sh           text eol=lf
+*.md           text eol=lf
+*.plist.in     text eol=lf
+*.example      text eol=lf
+*.env          text eol=lf

@@ -31,8 +31,10 @@ $SrcDir   = $PSScriptRoot
 # ── 需要管理员权限才能注册计划任务 ──────────────────────────────
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $isAdmin) {
-    Write-Host '注册计划任务需要管理员权限，正在提权（会弹 UAC）...' -ForegroundColor Yellow
-    $argList = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$PSCommandPath`"")
+    Write-Host '注册计划任务需要管理员权限，正在提权（会弹 UAC，请点"是"）...' -ForegroundColor Yellow
+    Write-Host '提权后会开一个新窗口，那个窗口完成后会保持打开，方便你看输出。' -ForegroundColor Yellow
+    # -NoExit：提权窗口跑完不自动关闭，否则用户什么都看不到
+    $argList = @('-NoProfile', '-NoExit', '-ExecutionPolicy', 'Bypass', '-File', "`"$PSCommandPath`"")
     if ($Uninstall) { $argList += '-Uninstall' }
     if ($Status)    { $argList += '-Status' }
     if ($IntervalSeconds -ne 60) { $argList += @('-IntervalSeconds', "$IntervalSeconds") }
@@ -153,3 +155,5 @@ Write-Host "  3)  $AppDir\campus-net.cmd force       确认服务端接受认证
 Write-Host "  4)  $AppDir\campus-net.cmd log         看日志"
 Write-Host ''
 Write-Host '  （也可以在解压目录里跑 .\install.cmd -Status 看任务状态）'
+Write-Host ''
+Write-Host '全部完成。可以直接关闭这个窗口。' -ForegroundColor Green

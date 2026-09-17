@@ -20,6 +20,9 @@ campus-net.cmd log          :: 看最近 20 行日志
 安装后 `%LOCALAPPDATA%\campus-net\` 下也有一份 `campus-net.cmd`，
 以后直接用它，不用再回到解压目录。
 
+> `install.cmd` 会先弹 UAC 提权，然后在**新窗口**里干活。那个窗口跑完会**保持打开**
+> （故意加的 `-NoExit`），方便你看完整输出和错误 —— 看完直接关掉即可。
+
 ### 为什么不能直接跑 `.\install.ps1`？
 
 Windows 客户端默认的 PowerShell 执行策略是 `Restricted`，会报：

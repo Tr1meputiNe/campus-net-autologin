@@ -1,6 +1,9 @@
 ﻿# campus-net-autologin (Windows) 配置模板
 # 复制成 config.ps1 后填写：  Copy-Item config.example.ps1 config.ps1
 # config.ps1 含密码，别提交到 git（仓库的 .gitignore 已排除它）。
+#
+# 编码提示：本文件是 UTF-8 with BOM。用记事本编辑后若中文注释变成乱码，
+# 不影响功能（要填的值本来就是 ASCII）；想避免就在"另存为"里选 UTF-8。
 
 # ── 账号 ──────────────────────────────────────────────────────
 # 有的学校要带运营商后缀，如 2025001@cmcc / @dx / @lt

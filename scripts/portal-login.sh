@@ -103,7 +103,7 @@ do_login() {
 }
 
 main() {
-    local cur prev last now rc ip_now LINK_DOWN
+    local cur key prev last now rc ip_now LINK_DOWN
 
     # --force：即使当前在线也发一次认证请求，用来验证参数是否被服务端接受
     if [ "$FORCE" = "1" ]; then
@@ -113,16 +113,17 @@ main() {
         return $rc
     fi
 
-    cur="$(cn_state)"
+    cur="$(cn_state)"          # 完整状态，写日志用
+    key="$(cn_state_key)"      # 指纹，判断是否真的变了
     ip_now="$(cn_ip)"
 
     if verify_online; then
         now=$(date +%s)
         prev="$(cat "$STATE_F" 2>/dev/null || true)"
         last="$(cat "$STATE_F.epoch" 2>/dev/null || echo 0)"
-        if [ "$cur" != "$prev" ] || [ $((now - last)) -ge "$HEARTBEAT_SEC" ]; then
+        if [ "$key" != "$prev" ] || [ $((now - last)) -ge "$HEARTBEAT_SEC" ]; then
             cn_log "OK    $cur"
-            printf '%s' "$cur" >"$STATE_F"
+            printf '%s' "$key" >"$STATE_F"
             printf '%s' "$now" >"$STATE_F.epoch"
         fi
         return 0
@@ -146,7 +147,7 @@ main() {
         else
             cn_log "AUTH  OK 网络自行恢复（本脚本本次未能认证：rc=$rc，原因=$([ "$LINK_DOWN" = "1" ] && echo '当时没有 IP' || echo '认证请求未被接受')）  $(cn_state)"
         fi
-        cn_state >"$STATE_F"; date +%s >"$STATE_F.epoch"
+        cn_state_key >"$STATE_F"; date +%s >"$STATE_F.epoch"
     else
         cn_log "AUTH  FAIL 自动认证未成功（rc=$rc）  $(cn_state)"
     fi

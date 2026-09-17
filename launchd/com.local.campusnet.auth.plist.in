@@ -25,7 +25,7 @@
     <key>RunAtLoad</key>
     <true/>
     <key>StartInterval</key>
-    <integer>30</integer>
+    <integer>__START_INTERVAL__</integer>
 
     <!-- 网络配置变化时立刻触发（切 Wi-Fi / 插拔网线 / 重新拿 IP） -->
     <key>WatchPaths</key>
@@ -36,7 +36,7 @@
     </array>
 
     <key>ThrottleInterval</key>
-    <integer>30</integer>
+    <integer>__THROTTLE__</integer>
 
     <key>StandardOutPath</key>
     <string>__LOG_DIR__/launchd.out.log</string>

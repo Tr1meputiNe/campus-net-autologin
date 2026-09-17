@@ -76,7 +76,14 @@ cn_online() {
     printf '000'; return 1
 }
 
-# 一行状态：便于 grep / diff
+# 状态指纹：只保留"有意义"的字段（排除 ping 这类每次都变的），
+# 用来判断状态是否真的变化，避免日志每 30 秒刷一行
+cn_state_key() {
+    printf 'iface=%s ip=%s mac=%s online=%s' \
+        "$IFACE" "$(cn_ip)" "$(cn_mac)" "$(cn_online)"
+}
+
+# 一行完整状态：写日志、人工查看用
 cn_state() {
     printf 'iface=%s ip=%s mac=%s gw=%s ping=%s online=%s' \
         "$IFACE" "$(cn_ip)" "$(cn_mac)" "$(cn_gw)" "$(cn_ping_gw)" "$(cn_online)"

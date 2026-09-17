@@ -45,8 +45,16 @@ install() {
     grep -q '^CAMPUS_PASS=""' "$INSTALL_DIR/config.env" 2>/dev/null && \
         echo "⚠️  $INSTALL_DIR/config.env 里 CAMPUS_PASS 还是空的，填上才会自动认证"
 
+    # 探活间隔（秒），可用 START_INTERVAL=60 ./install.sh 覆盖
+    INTERVAL="${START_INTERVAL:-30}"
+    case "$INTERVAL" in (''|*[!0-9]*) echo "START_INTERVAL 必须是整数"; exit 1 ;; esac
+    [ "$INTERVAL" -ge 5 ] || { echo "START_INTERVAL 至少 5 秒"; exit 1; }
+    THROTTLE=$(( INTERVAL < 30 ? INTERVAL : 30 ))
+
     sed -e "s|__INSTALL_DIR__|$INSTALL_DIR|g" \
         -e "s|__LOG_DIR__|$LOG_DIR|g" \
+        -e "s|__START_INTERVAL__|$INTERVAL|g" \
+        -e "s|__THROTTLE__|$THROTTLE|g" \
         "$SRC/launchd/$LABEL.plist.in" >"$PLIST"
 
     launchctl bootout "gui/$UID_N/$LABEL" 2>/dev/null || true
@@ -54,7 +62,7 @@ install() {
     launchctl kickstart -k "gui/$UID_N/$LABEL" 2>/dev/null || true
 
     echo
-    echo "✅ 已安装并加载：$PLIST"
+    echo "✅ 已安装并加载：$PLIST（探活间隔 ${INTERVAL}s）"
     echo "   日志：$LOG_DIR/monitor.log"
     echo "   手动跑一次：$INSTALL_DIR/scripts/portal-login.sh"
     echo "   看状态：    $SRC/install.sh --status"

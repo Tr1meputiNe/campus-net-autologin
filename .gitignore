@@ -1,0 +1,13 @@
+# 含账号密码，绝不提交
+config.env
+
+# 运行时产物
+logs/
+state/
+*.log
+
+# macOS
+.DS_Store
+
+# 个人工作文档（含本机 MAC 等），不进仓库
+register-devices.md

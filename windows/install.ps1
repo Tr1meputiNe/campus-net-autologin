@@ -94,7 +94,7 @@ New-Item -ItemType Directory -Force -Path $AppDir | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $AppDir 'logs')  | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $AppDir 'state') | Out-Null
 
-foreach ($f in @('campus-net-autologin.ps1', 'install.ps1', 'install.cmd', 'campus-net.cmd', 'config.example.ps1', 'README.md')) {
+foreach ($f in @('campus-net-autologin.ps1', 'install.ps1', 'install.cmd', 'campus-net.cmd', 'run-hidden.vbs', 'config.example.ps1', 'README.md')) {
     $src = Join-Path $SrcDir $f
     if (Test-Path $src) { Copy-Item -LiteralPath $src -Destination $AppDir -Force }
 }
@@ -111,8 +111,12 @@ $script = Join-Path $AppDir 'campus-net-autologin.ps1'
 if (-not (Test-Path $script)) { throw "找不到主脚本 $script" }
 
 # 注册计划任务：每分钟一次，以当前用户身份、仅在登录时运行、以普通权限运行
-$action = New-ScheduledTaskAction -Execute 'powershell.exe' `
-    -Argument "-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$script`""
+# 通过 wscript.exe + run-hidden.vbs 启动，避免每分钟闪一个黑色控制台窗口。
+# 直接跑 powershell.exe 时，即使加 -WindowStyle Hidden，Windows 也会先建好控制台
+# 再隐藏，所以那一下闪烁躲不掉。wscript.exe 是 GUI 宿主，本身没有控制台。
+$vbs = Join-Path $AppDir 'run-hidden.vbs'
+$action = New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\wscript.exe" `
+    -Argument "`"$vbs`" `"$script`""
 
 # 触发器 1：登录时立刻跑一次 —— 这就是"开机自启动"
 #   （任务以"仅在用户登录时运行"的方式注册，所以登录触发是正确粒度；

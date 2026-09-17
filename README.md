@@ -22,6 +22,10 @@ macOS 校园网**掉线自动重连**工具。适用于使用 **Dr.COM / 锐捷 
 - macOS（LaunchAgent + `curl`，无第三方依赖）
 - 校园网是 **Dr.COM / 锐捷 eportal** Web 认证（浏览器会弹登录页输学号密码）
 
+> **Windows 用户**：见 [`windows/`](windows/) —— 同一套判定逻辑的 PowerShell 移植，
+> 用计划任务每分钟探活（Windows 计划程序的最小重复间隔就是 1 分钟）。
+> 两边命令、配置项、日志格式、判定规则都对齐。
+
 > 其它认证系统（深澜 srun 等）可以用 `LOGIN_MODE=curl`：把浏览器里真实的登录请求
 > 「Copy as cURL」粘进配置即可。
 
@@ -229,11 +233,16 @@ campus-net/
 ├── install.sh                                 # 安装 / 卸载 / 看状态
 ├── config.env.example                         # 配置模板
 ├── launchd/com.local.campusnet.auth.plist.in  # LaunchAgent 模板（30s 探活）
-└── scripts/
-    ├── lib.sh            # 探活与判定核心
-    ├── portal-login.sh   # 认证主程序（LaunchAgent 调它）
-    ├── net-monitor.sh    # 手动查看状态 / 掉线取证
-    └── log-summary.sh    # 日志统计
+├── scripts/                                   # macOS
+│   ├── lib.sh            # 探活与判定核心
+│   ├── portal-login.sh   # 认证主程序（LaunchAgent 调它）
+│   ├── net-monitor.sh    # 手动查看状态 / 掉线取证
+│   └── log-summary.sh    # 日志统计
+└── windows/                                   # Windows 移植
+    ├── README.md
+    ├── install.ps1                  # 注册/卸载计划任务
+    ├── campus-net-autologin.ps1     # 认证主程序
+    └── config.example.ps1           # 配置模板
 ```
 
 ## 说明

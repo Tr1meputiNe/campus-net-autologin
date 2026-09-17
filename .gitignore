@@ -1,5 +1,6 @@
 # 含账号密码，绝不提交
 config.env
+windows/config.ps1
 
 # 运行时产物
 logs/

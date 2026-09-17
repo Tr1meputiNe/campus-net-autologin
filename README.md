@@ -30,7 +30,7 @@ macOS 校园网**掉线自动重连**工具。适用于使用 **Dr.COM / 锐捷 
 ## 安装
 
 ```bash
-git clone <this-repo> ~/Desktop/campus-net
+git clone https://github.com/Tr1meputiNe/campus-net-autologin.git ~/Desktop/campus-net
 cd ~/Desktop/campus-net
 ./install.sh                                     # 装到 ~/.local/share/campus-net 并加载 LaunchAgent
 $EDITOR ~/.local/share/campus-net/config.env     # 填学号/密码/portal 地址

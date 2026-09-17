@@ -4,45 +4,70 @@ macOS 版的 Windows 移植。功能一致：探活 → 判定被踢 → 自动�
 
 ## 快速开始
 
-在 `windows` 目录下打开 PowerShell：
+**用 `.cmd` 启动器** —— Windows 默认禁止运行 `.ps1`，启动器会自动带上
+`-ExecutionPolicy Bypass`（**只对本次进程生效，不改任何系统设置**）。
 
-```powershell
-# 1) 安装（会弹 UAC 提权，因为要注册计划任务）
-.\install.ps1
+在 `windows` 目录里双击 `install.cmd`，或在该目录打开 CMD/PowerShell 执行：
 
-# 2) 填配置
-notepad "$env:LOCALAPPDATA\campus-net\config.ps1"
-
-# 3) 诊断：确认网卡、IP、探针、portal 都符合预期
-& "$env:LOCALAPPDATA\campus-net\campus-net-autologin.ps1" -Diagnose
-
-# 4) 确认服务端接受认证请求（在线时只会证明请求格式对，证明不了密码）
-& "$env:LOCALAPPDATA\campus-net\campus-net-autologin.ps1" -Force
-
-# 5) 看任务状态和最近日志
-.\install.ps1 -Status
+```
+install.cmd                 :: 安装（会弹 UAC 提权，因为要注册计划任务）
+campus-net.cmd config       :: 填学号 / 密码 / portal 地址
+campus-net.cmd diagnose     :: 诊断：确认网卡、探针、portal 都对
+campus-net.cmd force        :: 确认服务端接受认证请求
+campus-net.cmd log          :: 看最近 20 行日志
 ```
 
-> **从 GitHub 下载 ZIP 的话，先解锁文件**，否则 Windows 会给它们打上"来自 Internet"的标记，
-> PowerShell 会拒绝运行：
-> ```powershell
-> Get-ChildItem -Recurse | Unblock-File
-> ```
->
-> 如果仍提示"无法加载文件，因为在此系统上禁止运行脚本"，用这一行绕过（只影响本次）：
-> ```powershell
-> powershell -ExecutionPolicy Bypass -File .\install.ps1
-> ```
+安装后 `%LOCALAPPDATA%\campus-net\` 下也有一份 `campus-net.cmd`，
+以后直接用它，不用再回到解压目录。
+
+### 为什么不能直接跑 `.\install.ps1`？
+
+Windows 客户端默认的 PowerShell 执行策略是 `Restricted`，会报：
+
+> 无法加载文件 ...，因为在此系统上禁止运行脚本。
+
+**这是系统默认设置，不是脚本的问题**，所以默认路径必然失败 —— 请用 `.cmd` 启动器。
+`Bypass` 的作用范围仅限该进程。
+
+想永久改策略（可选，非必需）：
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+Get-ChildItem -Recurse | Unblock-File    # ZIP 解压出来的文件还需解锁
+```
+
+### 从 ZIP 安装必须多做一步
+
+GitHub 下载的 ZIP 解压后，每个文件都带"来自 Internet"标记，PowerShell 会拒绝运行
+（这一点 `.cmd` 启动器也救不了）：
+
+```powershell
+Get-ChildItem -Recurse | Unblock-File
+```
 
 ## 命令
 
+推荐用 `.cmd` 启动器（会自动绕过执行策略限制）：
+
 | 命令 | 作用 |
 |---|---|
-| `.\install.ps1` | 安装并注册计划任务（每分钟一次） |
-| `.\install.ps1 -Status` | 任务状态 + 最近 15 行日志 |
-| `.\install.ps1 -Uninstall` | 删除任务（保留配置和日志） |
-| `campus-net-autologin.ps1 -Diagnose` | 环境诊断，用来填配置 |
-| `campus-net-autologin.ps1 -Force` | 立即发一次认证请求 |
+| `install.cmd` | 安装并注册计划任务 |
+| `install.cmd -Status` | 任务状态 + 最近 15 行日志 |
+| `install.cmd -Uninstall` | 删除任务（保留配置和日志） |
+| `campus-net.cmd diagnose` | 环境诊断，用来填配置 |
+| `campus-net.cmd force` | 立即发一次认证请求 |
+| `campus-net.cmd rotate` | 立即轮转日志 |
+| `campus-net.cmd log` | 看最近 20 行日志 |
+| `campus-net.cmd config` | 用记事本打开配置 |
+| `campus-net.cmd status` | 计划任务状态 |
+
+等价的原始 PowerShell 命令（需要自己加 `-ExecutionPolicy Bypass`）：
+
+| 命令 | 作用 |
+|---|---|
+| `install.ps1` | 安装 |
+| `campus-net-autologin.ps1 -Diagnose` | 环境诊断 |
+| `campus-net-autologin.ps1 -Force` | 立即认证 |
 | `campus-net-autologin.ps1 -Rotate` | 立即轮转日志 |
 
 ## 开机自启动

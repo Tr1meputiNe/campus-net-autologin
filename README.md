@@ -25,6 +25,8 @@ macOS 校园网**掉线自动重连**工具。适用于使用 **Dr.COM / 锐捷 
 > **Windows 用户**：见 [`windows/`](windows/) —— 同一套判定逻辑的 PowerShell 移植，
 > 用计划任务每分钟探活（Windows 计划程序的最小重复间隔就是 1 分钟）。
 > 两边命令、配置项、日志格式、判定规则都对齐。
+>
+> ⚠️ Windows 默认禁止运行 `.ps1`，**请用 `install.cmd` 启动**，不要直接跑 `install.ps1`。
 
 > 其它认证系统（深澜 srun 等）可以用 `LOGIN_MODE=curl`：把浏览器里真实的登录请求
 > 「Copy as cURL」粘进配置即可。
@@ -240,6 +242,8 @@ campus-net/
 │   └── log-summary.sh    # 日志统计
 └── windows/                                   # Windows 移植
     ├── README.md
+    ├── install.cmd                  # 启动器（绕过执行策略限制）
+    ├── campus-net.cmd               # 常用命令入口
     ├── install.ps1                  # 注册/卸载计划任务
     ├── campus-net-autologin.ps1     # 认证主程序
     └── config.example.ps1           # 配置模板

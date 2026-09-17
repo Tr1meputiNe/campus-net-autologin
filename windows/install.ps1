@@ -92,7 +92,7 @@ New-Item -ItemType Directory -Force -Path $AppDir | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $AppDir 'logs')  | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $AppDir 'state') | Out-Null
 
-foreach ($f in @('campus-net-autologin.ps1', 'config.example.ps1', 'README.md')) {
+foreach ($f in @('campus-net-autologin.ps1', 'install.ps1', 'install.cmd', 'campus-net.cmd', 'config.example.ps1', 'README.md')) {
     $src = Join-Path $SrcDir $f
     if (Test-Path $src) { Copy-Item -LiteralPath $src -Destination $AppDir -Force }
 }
@@ -146,8 +146,10 @@ Write-Host ''
 Write-Host '立刻试跑一次...' -ForegroundColor Cyan
 & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script
 Write-Host ''
-Write-Host '接下来：' -ForegroundColor Cyan
-Write-Host "  1) 编辑 $cfg 填好 CampusUser / CampusPass / PortalHost"
-Write-Host "  2) 运行  & '$script' -Diagnose     看诊断是否符合预期"
-Write-Host "  3) 运行  & '$script' -Force        确认服务端接受认证请求"
-Write-Host "  4) 运行  .\install.ps1 -Status     看任务状态"
+Write-Host '接下来（用 .cmd 启动器，不需要改任何系统设置）：' -ForegroundColor Cyan
+Write-Host "  1)  $AppDir\campus-net.cmd config      用记事本填学号/密码/portal 地址"
+Write-Host "  2)  $AppDir\campus-net.cmd diagnose    看诊断是否符合预期"
+Write-Host "  3)  $AppDir\campus-net.cmd force       确认服务端接受认证请求"
+Write-Host "  4)  $AppDir\campus-net.cmd log         看日志"
+Write-Host ''
+Write-Host '  （也可以在解压目录里跑 .\install.cmd -Status 看任务状态）'

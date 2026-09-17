@@ -114,6 +114,14 @@ cn_rotate_log() {
     fi
 
     cutoff=$(date -v-"${days}"d '+%Y-%m-%d %H:%M:%S')
+
+    # 日志只追加，首行即最老的一行。首行都还没过期就无事可做，别白重写一遍文件
+    if awk -v c="$cutoff" 'NR==1 { exit ($1" "$2 >= c) ? 0 : 1 }' "$log" 2>/dev/null; then
+        mkdir -p "$STATE_DIR" 2>/dev/null
+        printf '%s' "$now" >"$stamp"
+        return 0
+    fi
+
     tmp="$log.tmp.$$"
     awk -v c="$cutoff" '$1" "$2 >= c' "$log" >"$tmp" 2>/dev/null && mv "$tmp" "$log"
     mkdir -p "$STATE_DIR" 2>/dev/null

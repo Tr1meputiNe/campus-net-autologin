@@ -23,7 +23,13 @@ notepad "$env:LOCALAPPDATA\campus-net\config.ps1"
 .\install.ps1 -Status
 ```
 
-> 如果提示"无法加载文件，因为在此系统上禁止运行脚本"，用这一行绕过（只影响本次）：
+> **从 GitHub 下载 ZIP 的话，先解锁文件**，否则 Windows 会给它们打上"来自 Internet"的标记，
+> PowerShell 会拒绝运行：
+> ```powershell
+> Get-ChildItem -Recurse | Unblock-File
+> ```
+>
+> 如果仍提示"无法加载文件，因为在此系统上禁止运行脚本"，用这一行绕过（只影响本次）：
 > ```powershell
 > powershell -ExecutionPolicy Bypass -File .\install.ps1
 > ```
